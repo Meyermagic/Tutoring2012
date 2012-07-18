@@ -1,6 +1,5 @@
 package com.tutoring.libs.stack;
 
-import java.lang.reflect.Array;
 import java.util.NoSuchElementException;
 
 public class ArrayStack<E> implements Stack<E> {
@@ -33,6 +32,9 @@ public class ArrayStack<E> implements Stack<E> {
             //And replace the reference to our old array with the new one.
             array = newArray;
         }
+
+        array[top] = element;
+        top++;
     }
 
     @Override
