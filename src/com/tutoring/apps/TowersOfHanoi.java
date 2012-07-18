@@ -4,7 +4,7 @@ import com.tutoring.libs.hanoi.Towers;
 
 public class TowersOfHanoi {
     public static void main(String[] args) {
-        int numDiscs = 6;
+        int numDiscs = 9;
         Towers hTowers = new Towers(numDiscs);
         hTowers.printTowers();
         moveRecursive(hTowers, 'A', 'C', numDiscs);
@@ -13,7 +13,10 @@ public class TowersOfHanoi {
     public static void moveRecursive(Towers towers, char from, char to, int num) {
         //If we're trying to move a single disc, just move it.
         if (num == 1) {
-            towers.moveDisc(from, to);
+            boolean status = towers.moveDisc(from, to);
+            if (!status) {
+                throw new RuntimeException("Bad move attempted from tower " + from + " to " + to + ".");
+            }
             towers.printTowers();
             return;
         }
