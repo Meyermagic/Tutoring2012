@@ -1,11 +1,23 @@
 package com.tutoring.libs.list;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Music
- * Date: 7/13/12
- * Time: 5:33 PM
- * To change this template use File | Settings | File Templates.
- */
+
 public interface List<E> {
+    //Add methods
+    public void add(int index, E element);
+    public void addFirst(E element);
+    public void addLast(E element);
+    //Get methods
+    public E get(int index);
+    public E getFirst();
+    public E getLast();
+    //Remove methods
+    public E remove(int index);
+    public E removeFirst();
+    public E removeLast();
+    //Set methods
+    public E set(int index, E element);
+    //Other
+    public int size();
+    public boolean isEmpty();
+    public void clear();
 }
