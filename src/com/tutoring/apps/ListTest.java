@@ -3,13 +3,7 @@ package com.tutoring.apps;
 import com.tutoring.libs.list.LinkedList;
 import com.tutoring.libs.list.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Music
- * Date: 7/20/12
- * Time: 10:49 AM
- * To change this template use File | Settings | File Templates.
- */
+
 public class ListTest {
     public static void main(String[] args) {
         List<Integer> testList = new LinkedList<Integer>();
