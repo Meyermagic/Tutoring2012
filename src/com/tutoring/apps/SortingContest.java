@@ -1,9 +1,6 @@
 package com.tutoring.apps;
 
-import com.tutoring.libs.sorting.InsertionSort;
-import com.tutoring.libs.sorting.MergeSort;
-import com.tutoring.libs.sorting.QuickSort;
-import com.tutoring.libs.sorting.SelectionSort;
+import com.tutoring.libs.sorting.*;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -21,7 +18,7 @@ public class SortingContest {
             test_array3[i] = temp;
         }
         QuickSort.sort(test_array1);
-        MergeSort.sort(test_array2);
+        HeapSort.sort(test_array2);
         Arrays.sort(test_array3);
         for (int i = 0; i < 30; i++) {
             System.out.println(test_array2[i]);
