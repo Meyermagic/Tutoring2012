@@ -2,13 +2,6 @@ package com.tutoring.libs.treemap.redblacktree;
 
 import java.awt.font.GlyphJustificationInfo;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Music
- * Date: 7/27/12
- * Time: 11:22 AM
- * To change this template use File | Settings | File Templates.
- */
 public class RBTree<K extends Comparable<? super K>, V> {
     public static final boolean DEBUG = true;
     public RBTreeNode<K, V> root;
@@ -100,6 +93,212 @@ public class RBTree<K extends Comparable<? super K>, V> {
         }
     }
 
+    public void insert(K key, V value) {
+        //Make a new node so we don't need to later
+        RBTreeNode<K, V> insertedNode = new RBTreeNode<K, V>(key, value, Color.RED, null, null);
+        //If root is null, set the new node to root (inserting it as the only pair in the tree)
+        if (root == null) {
+            root = insertedNode;
+        } else {
+            //Start with current node being root
+            RBTreeNode<K, V> node = root;
+            //Loop down the tree until we've found the proper place
+            while (true) {
+                int cmp = key.compareTo(node.key);
+                if (cmp == 0) {
+                    //If the key was already in the tree, then replace it
+                    //(We won't even need to rebalance!)
+                    node.value = value;
+                    return;
+                } else if (cmp < 0) {
+                    //If we're inserting to the left of a node with no left child...
+                    if (node.left == null) {
+                        //Then we'll insert it there, and re-balance in a bit.
+                        node.left = insertedNode;
+                        break;
+                    } else {
+                        //Otherwise, "recurse" on left child.
+                        node = node.left;
+                    }
+                } else { //if (cmp > 0)
+                    assert cmp > 0;
+                    //If we're inserting to the right of a node with no right child...
+                    if (node.right == null) {
+                        //Insert it there, and rebalance later.
+                        node.right = insertedNode;
+                        break;
+                    } else {
+                        //Otherwise, recurse on right
+                        node = node.right;
+                    }
+                }
+            }
+            //If we've exited the while loop here, then insertedNode has just been made the child of node
+            //So we'll fix the parent.
+            insertedNode.parent = node;
+        }
+        //Re-balance.
+        insertCase1(insertedNode);
+        //Complain if we've messed up.
+        verifyProperties();
+    }
+
+    //Case 1: We've inserted at the root.
+    private void insertCase1(RBTreeNode<K, V> node) {
+        if (node.parent == null) {
+            //If we've inserted at the root, then color the node black.
+            node.color = Color.BLACK;
+        } else {
+            //Otherwise, check case 2.
+            insertCase2(node);
+        }
+    }
+
+    private void insertCase2(RBTreeNode<K, V> node) {
+        //If the new node (that we inserted as red) has a black parent
+        if (nodeColor(node.parent) == Color.BLACK) {
+            //Then we haven't messed anything up by inserting it.
+            //(Unless it was the root, which we covered in case 1)
+            return;
+        } else {
+            insertCase3(node);
+        }
+    }
+
+    private void insertCase3(RBTreeNode<K, V> node) {
+        //If the new node (inserted as red) has a RED parent and parent sibling
+        if (nodeColor(node.uncle()) == Color.RED) {
+            //Then we'll want to repaint the parent, uncle, and grandparent opposite colors to fix this.
+            node.parent.color = Color.BLACK;
+            node.uncle().color = Color.BLACK;
+            node.grandparent().color = Color.RED;
+            //This may cause its own problems, though
+            //(the grandparent could have been root, which needs to be black,
+            //or the #black paths property could fail)
+            //So we'll go back and (recursively) fix the grandparent)
+            insertCase1(node.grandparent());
+        } else {
+            insertCase4(node);
+        }
+    }
+
+    private void insertCase4(RBTreeNode<K, V> node) {
+        //If we're the right child of our parent
+        //and our parent is the left child of our grandparent
+        if (node == node.parent.right && node.parent == node.grandparent().left) {
+            //Then we want to perform a left rotation about the parent/
+            rotateLeft(node.parent);
+            node = node.left;
+            //And the mirror image case:
+        } else if (node == node.parent.left && node.parent == node.grandparent().right) {
+            rotateRight(node.parent);
+            node = node.right;
+        }
+        //Note: The above doesn't fix all properties
+        insertCase5(node);
+    }
+
+    private void insertCase5(RBTreeNode<K, V> node) {
+        //Fix ancestor colors.
+        node.parent.color = Color.BLACK;
+        node.grandparent().color = Color.RED;
+        //If we're our parent's left child
+        //And our parent is our grandparent's left child
+        if (node == node.parent.left && node.parent == node.grandparent().left) {
+            //Then rotate right about the grandparent, which will
+            rotateRight(node.grandparent());
+        } else {
+            assert node == node.parent.right && node.parent == node.grandparent().right;
+            //Otherwise, rotate grandparent left.
+            rotateLeft(node.grandparent());
+        }
+    }
+
+    public void delete(K key) {
+        //Lookup the node we're trying to delete (Woo parent references!~)
+        RBTreeNode<K, V> node = lookupNode(key);
+        if (node == null) {
+            //If the node we're trying to delete isn't actually in the tree
+            //Then return, because we don't have anything to do.
+            return;
+        }
+        //If the node we're removing has children...
+        if (node.left != null && node.right != null) {
+            //Grab rightmost child
+            RBTreeNode<K, V> next = maximumNode(node.left);
+            //Replace the node we're trying to delete with the rightmost child (in terms of values/keys, children still there.)
+            node.key = next.key;
+            node.value = next.value;
+            //Then swap the node reference we're trying to delete with the rightmost child reference (which is fine now)
+            node = next;
+        }
+
+        //Make sure we have at least one null child
+        assert node.left == null || node.right == null;
+        RBTreeNode<K, V> child;
+        //Let child be our only child node if right is null,
+        //Else the right child
+        if (node.right == null) {
+            child = node.left;
+        } else {
+            child = node.right;
+        }
+        //If we're a black node
+        if (nodeColor(node) == Color.BLACK) {
+            //Replace our color with child's color
+            node.color = nodeColor(child);
+            //Then go on and actually delete the node (with fixing)
+            deleteCase1(node);
+        }
+        //Fix the children/parent references
+        replaceNode(node, child);
+
+        //If root ended up red after all this
+        if (nodeColor(root) == Color.RED) {
+            //Fix it.
+            root.color = Color.BLACK;
+        }
+
+        verifyProperties();
+    }
+
+    private static <K extends Comparable<? super K>,V> RBTreeNode<K,V> maximumNode(RBTreeNode<K,V> node) {
+        assert node != null;
+        while (node.right != null) {
+            node = node.right;
+        }
+        return node;
+    }
+
+    private void deleteCase1(RBTreeNode<K,V> node) {
+        //If node is now root
+        if (node.parent == null) {
+            //Then we're done (root should be fine)
+            return;
+        } else {
+            deleteCase2(node);
+        }
+    }
+
+    private void deleteCase2(RBTreeNode<K,V> node) {
+
+    }
+
+    private void deleteCase3(RBTreeNode<K,V> node) {
+
+    }
+
+    private void deleteCase4(RBTreeNode<K,V> node) {
+
+    }
+
+    private void deleteCase5(RBTreeNode<K,V> node) {
+
+    }
+
+    private void deleteCase6(RBTreeNode<K,V> node) {
+
+    }
 
 
     //Testing + Verification
