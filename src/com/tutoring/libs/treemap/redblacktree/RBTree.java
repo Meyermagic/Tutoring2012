@@ -222,9 +222,9 @@ public class RBTree<K extends Comparable<? super K>, V> {
             //Then return, because we don't have anything to do.
             return;
         }
-        //If the node we're removing has children...
+        //If the node we're removing has both children...
         if (node.left != null && node.right != null) {
-            //Grab rightmost child
+            //Grab rightmost left child (predecessor)
             RBTreeNode<K, V> next = maximumNode(node.left);
             //Replace the node we're trying to delete with the rightmost child (in terms of values/keys, children still there.)
             node.key = next.key;
@@ -247,10 +247,10 @@ public class RBTree<K extends Comparable<? super K>, V> {
         if (nodeColor(node) == Color.BLACK) {
             //Replace our color with child's color
             node.color = nodeColor(child);
-            //Then go on and actually delete the node (with fixing)
+            //Then go on and fix the tree.
             deleteCase1(node);
         }
-        //Fix the children/parent references
+        //Fix the children/parent references (actual deletion occurs here, for the most part)
         replaceNode(node, child);
 
         //If root ended up red after all this
@@ -280,24 +280,85 @@ public class RBTree<K extends Comparable<? super K>, V> {
         }
     }
 
-    private void deleteCase2(RBTreeNode<K,V> node) {
 
+    private void deleteCase2(RBTreeNode<K,V> node) {
+        //If our sibling is red
+        if (nodeColor(node.sibling()) == Color.RED) {
+            //Recolor the parent and sibling so the colors are
+            //How they were before rotation (about)
+            node.parent.color = Color.RED;
+            node.sibling().color = Color.BLACK;
+            //Then rotate towards us.
+            if (node == node.parent.left) {
+                rotateLeft(node.parent);
+            } else {
+                rotateRight(node.parent);
+            }
+        }
+        deleteCase3(node);
     }
 
     private void deleteCase3(RBTreeNode<K,V> node) {
-
+        //If parent, sibling, and both sibling's children are black
+        if (nodeColor(node.parent) == Color.BLACK &&
+                nodeColor(node.sibling()) == Color.BLACK &&
+                nodeColor(node.sibling().left) == Color.BLACK &&
+                nodeColor(node.sibling().right) == Color.BLACK) {
+            //Paint sibling red, and fix properties from sibling's parent.
+            node.sibling().color = Color.RED;
+            deleteCase1(node.parent);
+        } else {
+            deleteCase4(node);
+        }
     }
 
     private void deleteCase4(RBTreeNode<K,V> node) {
-
+        //If sibling's tree has longer black paths
+        if(nodeColor(node.parent) == Color.RED &&
+                nodeColor(node.sibling()) == Color.BLACK &&
+                nodeColor(node.sibling().left) == Color.BLACK &&
+                nodeColor(node.sibling().right) == Color.BLACK) {
+            //Color sibling red
+            node.sibling().color = Color.RED;
+            //And parent black
+            node.parent.color = Color.BLACK;
+            //This should make the black paths property true again
+        } else {
+            deleteCase5(node);
+        }
     }
 
     private void deleteCase5(RBTreeNode<K,V> node) {
-
+        if (node == node.parent.left &&
+                nodeColor(node.sibling()) == Color.BLACK &&
+                nodeColor(node.sibling().left) == Color.RED &&
+                nodeColor(node.sibling().right) == Color.BLACK) {
+            node.sibling().color = Color.RED;
+            node.sibling().left.color = Color.BLACK;
+            rotateRight(node.sibling());
+        } else if (node == node.parent.right &&
+                nodeColor(node.sibling()) == Color.BLACK &&
+                nodeColor(node.sibling().right) == Color.RED &&
+                nodeColor(node.sibling().left) == Color.BLACK) {
+            node.sibling().color = Color.RED;
+            node.sibling().right.color = Color.BLACK;
+            rotateLeft(node.sibling());
+        }
+        deleteCase6(node);
     }
 
     private void deleteCase6(RBTreeNode<K,V> node) {
-
+        node.sibling().color = nodeColor(node.parent);
+        node.parent.color = Color.BLACK;
+        if (node == node.parent.left) {
+            assert nodeColor(node.sibling().right) == Color.RED;
+            node.sibling().right.color = Color.BLACK;
+            rotateLeft(node.parent);
+        } else {
+            assert nodeColor(node.sibling().left) == Color.RED;
+            node.sibling().left.color = Color.BLACK;
+            rotateRight(node.parent);
+        }
     }
 
 
