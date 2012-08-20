@@ -9,14 +9,9 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Music
- * Date: 8/20/12
- * Time: 10:07 AM
- * To change this template use File | Settings | File Templates.
- */
+
 public class WikipediaCrawl {
     public static void main(String[] args) {
         String start_article = "http://en.wikipedia.org/wiki/Contempt_of_court";
@@ -35,7 +30,7 @@ public class WikipediaCrawl {
         }
         Element body = doc.getElementById("mw-content-text");
         Elements anchors = body.select("a[href]");
-        ArrayList<String> links = new ArrayList<String>();
+        HashSet<String> links = new HashSet<String>();
         for (Element anchor : anchors) {
             String link = anchor.attr("href");
             if (link.startsWith("/wiki/") && !link.contains(":")) {
